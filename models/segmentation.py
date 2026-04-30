@@ -71,12 +71,12 @@ class MapSegmenter:
 
     def __init__(self, model_path: str = None, device: str = None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model  = build_model()
+        self.model  = build_model(num_classes=2)
         self.model.to(self.device)
         self.transforms = get_transforms()
 
         if model_path:
-            state = torch.load(model_path, map_location=self.device)
+            state = torch.load(model_path, map_location=self.device, weights_only=False)
             self.model.load_state_dict(state)
             print(f"[MapSegmenter] Loaded weights from {model_path}")
         else:
@@ -115,7 +115,7 @@ class MapSegmenter:
                 mask   = self.predict_tile(tile)
                 # Resize back to original tile dimensions before pasting
                 mask_resized = np.array(
-                    Image.fromarray(mask).resize((x2 - x1, y2 - y1), Image.NEAREST)
+                    Image.fromarray(mask.astype(np.uint8)).resize((x2 - x1, y2 - y1), Image.NEAREST)
                 )
                 output[y1:y2, x1:x2] = np.where(
                     count[y1:y2, x1:x2] == 0, mask_resized, output[y1:y2, x1:x2]

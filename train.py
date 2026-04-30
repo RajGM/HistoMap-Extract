@@ -9,6 +9,9 @@ Usage:
 Saves best model weights to models/segmentation_weights.pth
 """
 
+import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import argparse
 from pathlib import Path
 
@@ -81,9 +84,11 @@ class ICDARMapDataset(Dataset):
                 mask  = mask.transpose(Image.FLIP_TOP_BOTTOM)
 
         image_tensor = self.img_transform(image)
-        mask_tensor  = torch.from_numpy(
-            np.array(mask.resize((TILE_SIZE, TILE_SIZE), Image.NEAREST))
-        ).long()
+
+        # ICDAR GT masks are 0/255 — convert to binary 0/1
+        mask_np = np.array(mask.resize((TILE_SIZE, TILE_SIZE), Image.NEAREST))
+        mask_np = (mask_np > 128).astype(np.int64)
+        mask_tensor = torch.from_numpy(mask_np).long()
 
         return image_tensor, mask_tensor
 
@@ -104,7 +109,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=args.batch, shuffle=True,  num_workers=2)
     val_loader   = DataLoader(val_dataset,   batch_size=args.batch, shuffle=False, num_workers=2)
 
-    model = build_model()
+    model = build_model(num_classes=2)
     Path(args.save).parent.mkdir(parents=True, exist_ok=True)
 
     train(
