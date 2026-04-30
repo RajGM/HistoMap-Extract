@@ -1,0 +1,26 @@
+# Environment
+venv/
+.env
+
+# Data (too large for GitHub)
+data/icdar21/
+
+# Model weights (too large for GitHub)
+models/*.pth
+
+# Pipeline outputs
+outputs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+/icdar21-mapsef-v.1.0.0

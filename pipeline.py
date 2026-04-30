@@ -21,6 +21,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from dotenv import load_dotenv
+load_dotenv()
+
+ICDAR_ROOT = os.getenv("ICDAR_ROOT")
+
 from models.segmentation import MapSegmenter, CLASSES
 from models.ocr import MapOCR
 from utils.georeference import georef_mask_to_geojson, polygonise, skeletonise_roads
@@ -49,6 +54,8 @@ def run(input_path: str, output_dir: str, weights: str = None,
     out.mkdir(parents=True, exist_ok=True)
 
     # ── 1. Load image ──────────────────────────────────────────────────────
+    # Real ICDAR path example:
+    #   data/icdar21/2-segmaparea/validation/201-INPUT.jpg
     print(f"\n[1/5] Loading image: {input_path}")
     image = Image.open(input_path).convert("RGB")
     W, H  = image.size

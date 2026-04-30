@@ -40,16 +40,19 @@ class ICDARMapDataset(Dataset):
     """
     ICDAR 2021 MapSeg dataset loader (Task 2: map area segmentation).
 
-    Expects directory structure:
-        data/icdar21/task2_train/
-            images/   *.png
-            masks/    *.png   (single-channel, class indices)
+    Expects the original ICDAR folder structure:
+        icdar21-mapseg-v1.0.0-full-20210527a/
+            2-segmaparea/
+                train/       101-INPUT.jpg, 101-OUTPUT-GT.png ...
+                validation/  201-INPUT.jpg, 201-OUTPUT-GT.png ...
+                test/        301-INPUT.jpg, 301-OUTPUT-GT.png ...
     """
 
     def __init__(self, data_dir: str, split: str = "train", augment: bool = True):
-        root        = Path(data_dir) / f"task2_{split}"
-        self.images = sorted((root / "images").glob("*.png"))
-        self.masks  = sorted((root / "masks").glob("*.png"))
+        # split = "train" | "validation" | "test"
+        root        = Path(data_dir) / "2-segmaparea" / split
+        self.images = sorted(root.glob("*-INPUT.jpg"))
+        self.masks  = sorted(root.glob("*-OUTPUT-GT.png"))
         assert len(self.images) == len(self.masks), \
             f"Image/mask count mismatch: {len(self.images)} vs {len(self.masks)}"
 
@@ -92,8 +95,8 @@ if __name__ == "__main__":
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training on: {device}")
 
-    train_dataset = ICDARMapDataset(args.data, split="train", augment=True)
-    val_dataset   = ICDARMapDataset(args.data, split="val",   augment=False)
+    train_dataset = ICDARMapDataset(args.data, split="train",      augment=True)
+    val_dataset   = ICDARMapDataset(args.data, split="validation", augment=False)
 
     print(f"Train samples: {len(train_dataset)}")
     print(f"Val samples:   {len(val_dataset)}")

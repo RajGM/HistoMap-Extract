@@ -128,13 +128,18 @@ def evaluate(pred_dir: str, gt_dir: str, out_path: str) -> dict:
     report   = {}
 
     # ── Segmentation ──────────────────────────────────────────────────────
-    pred_mask_path = pred_dir / "segmentation_mask.png"
-    gt_mask_path   = gt_dir   / "mask.png"
+    # Real ICDAR structure: 2-segmaparea/validation/201-OUTPUT-GT.png
+    gt_masks   = sorted(Path(gt_dir).glob("2-segmaparea/validation/*-OUTPUT-GT.png"))
+    pred_masks = sorted(Path(pred_dir).glob("*.png"))
 
-    if pred_mask_path.exists() and gt_mask_path.exists():
+    if gt_masks and pred_masks:
         print("[Eval] Computing segmentation metrics …")
-        pred_mask = load_mask(str(pred_mask_path))
-        gt_mask   = load_mask(str(gt_mask_path))
+        pred_mask = load_mask(str(pred_masks[0]))
+        gt_mask   = load_mask(str(gt_masks[0]))
+
+        # Binarise GT (ICDAR GT is 0/255, convert to 0/1)
+        gt_mask   = (gt_mask > 128).astype(np.uint8)
+        pred_mask = (pred_mask > 128).astype(np.uint8)
 
         # Align sizes if necessary
         if pred_mask.shape != gt_mask.shape:
@@ -145,13 +150,13 @@ def evaluate(pred_dir: str, gt_dir: str, out_path: str) -> dict:
             )
 
         report["segmentation"] = {
-            "iou":          compute_iou(pred_mask, gt_mask),
-            "building_f1":  compute_f1(pred_mask, gt_mask, cls=1),
+            "iou":         compute_iou(pred_mask, gt_mask, num_classes=2),
+            "building_f1": compute_f1(pred_mask, gt_mask, cls=1),
         }
         print(f"  mIoU:        {report['segmentation']['iou']['mIoU']}")
         print(f"  Building F1: {report['segmentation']['building_f1']['f1']}")
     else:
-        print("[Eval] Segmentation mask not found — skipping.")
+        print("[Eval] Segmentation masks not found — skipping.")
         report["segmentation"] = "masks not found"
 
     # ── OCR ───────────────────────────────────────────────────────────────
